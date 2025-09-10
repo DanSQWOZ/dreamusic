@@ -1,0 +1,123 @@
+// package.json
+{
+  "name": "devimusic",
+  "version": "1.0.0",
+  "description": "DeviMusic - музыкальная платформа",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "path": "^0.12.7",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
+
+// server.js
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const cors = require('cors');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public'));
+app.use('/uploads', express.static('uploads'));
+
+// Создаем папку для загрузок если её нет
+if (!fs.existsSync('uploads')) {
+    fs.mkdirSync('uploads');
+}
+
+// Настройка multer для загрузки файлов
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    fileFilter: function (req, file, cb) {
+        const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp3'];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Только аудио файлы разрешены!'), false);
+        }
+    },
+    limits: {
+        fileSize: 50 * 1024 * 1024 // 50MB
+    }
+});
+
+// Простая база данных в памяти (для продакшена используй реальную БД)
+let tracks = [];
+
+// API маршруты
+app.get('/api/tracks', (req, res) => {
+    res.json(tracks);
+});
+
+app.post('/api/upload', upload.single('audio'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'Файл не найден' });
+    }
+
+    const track = {
+        id: Date.now(),
+        name: req.file.originalname.replace(/\.[^/.]+$/, ""),
+        filename: req.file.filename,
+        url: `/uploads/${req.file.filename}`,
+        uploadDate: new Date().toLocaleDateString('ru-RU'),
+        uploadTime: new Date().toISOString()
+    };
+
+    tracks.unshift(track);
+    res.json({ success: true, track });
+});
+
+app.delete('/api/tracks/:id', (req, res) => {
+    const trackId = parseInt(req.params.id);
+    const trackIndex = tracks.findIndex(t => t.id === trackId);
+    
+    if (trackIndex === -1) {
+        return res.status(404).json({ error: 'Трек не найден' });
+    }
+
+    const track = tracks[trackIndex];
+    const filePath = path.join(__dirname, 'uploads', track.filename);
+    
+    // Удаляем файл
+    if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+    }
+    
+    // Удаляем из массива
+    tracks.splice(trackIndex, 1);
+    res.json({ success: true });
+});
+
+// Главная страница
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.listen(PORT, () => {
+    console.log(`DeviMusic сервер запущен на порту ${PORT}`);
+});
