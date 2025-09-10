@@ -1,0 +1,542 @@
+// public/index.html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeviMusic</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 120px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            color: #fff;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .header p {
+            color: #aaa;
+            font-size: 1.1rem;
+        }
+
+        .upload-section {
+            background: rgba(255,255,255,0.05);
+            border: 2px dashed #555;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #777;
+            background: rgba(255,255,255,0.08);
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(45deg, #4a4a4a, #6a6a6a);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .upload-btn:hover {
+            background: linear-gradient(45deg, #5a5a5a, #7a7a7a);
+            transform: translateY(-2px);
+        }
+
+        .tracks-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .track-item {
+            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: 1px solid #444;
+        }
+
+        .track-item:hover {
+            background: linear-gradient(135deg, #3a3a3a, #4a4a4a);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .track-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #666, #888);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .track-icon:hover {
+            background: linear-gradient(45deg, #777, #999);
+            transform: scale(1.1);
+        }
+
+        .track-icon.playing {
+            background: linear-gradient(45deg, #4CAF50, #66BB6A);
+        }
+
+        .track-details {
+            flex: 1;
+            text-align: left;
+        }
+
+        .track-details h3 {
+            color: #fff;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .track-details p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .player {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            padding: 20px;
+            border-top: 2px solid #444;
+            display: none;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+        }
+
+        .player.active {
+            display: block;
+        }
+
+        .player-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .current-track {
+            flex: 1;
+            color: #fff;
+        }
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .control-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .progress-container {
+            flex: 2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: #444;
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #66BB6A);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        .time-display {
+            color: #aaa;
+            font-size: 0.9rem;
+            min-width: 45px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h2 {
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .player-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .progress-container {
+                width: 100%;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .track-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .track-details {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🎵 DeviMusic</h1>
+            <p>Делись музыкой с миром</p>
+        </header>
+
+        <div class="upload-section">
+            <h2>Загрузить трек</h2>
+            <p style="margin: 15px 0; color: #aaa;">Поддерживаемые форматы: MP3, WAV, OGG</p>
+            <input type="file" id="fileInput" accept="audio/*">
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                📁 Выбрать файл
+            </button>
+            <div id="uploadStatus" style="margin-top: 15px;"></div>
+        </div>
+
+        <div class="tracks-list" id="tracksList">
+            <div class="empty-state">
+                <h2>Загружаются треки...</h2>
+                <p>Подождите немного</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="player" id="player">
+        <div class="player-content">
+            <div class="current-track">
+                <div id="currentTrackName">Не выбран трек</div>
+            </div>
+            <div class="player-controls">
+                <button class="control-btn" id="prevBtn">⏮️</button>
+                <button class="control-btn" id="playPauseBtn">▶️</button>
+                <button class="control-btn" id="nextBtn">⏭️</button>
+            </div>
+            <div class="progress-container">
+                <span class="time-display" id="currentTime">0:00</span>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="time-display" id="totalTime">0:00</span>
+            </div>
+        </div>
+        <audio id="audioPlayer"></audio>
+    </div>
+
+    <script>
+        class DeviMusic {
+            constructor() {
+                this.tracks = [];
+                this.currentTrackIndex = -1;
+                this.isPlaying = false;
+                this.audioPlayer = document.getElementById('audioPlayer');
+                this.init();
+            }
+
+            async init() {
+                await this.loadTracks();
+                this.setupEventListeners();
+                this.updatePlayerDisplay();
+            }
+
+            async loadTracks() {
+                try {
+                    const response = await fetch('/api/tracks');
+                    this.tracks = await response.json();
+                    this.renderTracks();
+                } catch (error) {
+                    console.error('Ошибка загрузки треков:', error);
+                    document.getElementById('tracksList').innerHTML = `
+                        <div class="empty-state">
+                            <h2>Ошибка загрузки</h2>
+                            <p>Попробуйте обновить страницу</p>
+                        </div>
+                    `;
+                }
+            }
+
+            setupEventListeners() {
+                const fileInput = document.getElementById('fileInput');
+                const audioPlayer = this.audioPlayer;
+
+                fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
+
+                // Плеер события
+                document.getElementById('playPauseBtn').addEventListener('click', () => this.togglePlay());
+                document.getElementById('nextBtn').addEventListener('click', () => this.nextTrack());
+                document.getElementById('prevBtn').addEventListener('click', () => this.prevTrack());
+                document.getElementById('progressBar').addEventListener('click', (e) => this.seekTo(e));
+
+                audioPlayer.addEventListener('timeupdate', () => this.updateProgress());
+                audioPlayer.addEventListener('ended', () => this.nextTrack());
+                audioPlayer.addEventListener('loadedmetadata', () => this.updateDuration());
+            }
+
+            async handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const statusDiv = document.getElementById('uploadStatus');
+                statusDiv.innerHTML = '<p class="loading">Загружается...</p>';
+
+                const formData = new FormData();
+                formData.append('audio', file);
+
+                try {
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        statusDiv.innerHTML = '<p class="success">✅ Трек успешно загружен!</p>';
+                        await this.loadTracks(); // Перезагружаем список
+                    } else {
+                        statusDiv.innerHTML = '<p class="error">❌ Ошибка при загрузке</p>';
+                    }
+
+                } catch (error) {
+                    statusDiv.innerHTML = '<p class="error">❌ Ошибка при загрузке</p>';
+                    console.error('Ошибка:', error);
+                }
+
+                setTimeout(() => statusDiv.innerHTML = '', 3000);
+                event.target.value = '';
+            }
+
+            renderTracks() {
+                const container = document.getElementById('tracksList');
+                
+                if (this.tracks.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <h2>Пока что здесь пусто</h2>
+                            <p>Будьте первым, кто загрузит трек!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = this.tracks.map((track, index) => `
+                    <div class="track-item">
+                        <div class="track-icon ${index === this.currentTrackIndex && this.isPlaying ? 'playing' : ''}" 
+                             onclick="deviMusic.playTrack(${index})">
+                            ${index === this.currentTrackIndex && this.isPlaying ? '⏸️' : '▶️'}
+                        </div>
+                        <div class="track-details">
+                            <h3>${track.name}</h3>
+                            <p>Загружен ${track.uploadDate}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            playTrack(index) {
+                if (this.currentTrackIndex === index && this.isPlaying) {
+                    this.pauseTrack();
+                    return;
+                }
+
+                this.currentTrackIndex = index;
+                const track = this.tracks[index];
+                
+                this.audioPlayer.src = track.url;
+                this.audioPlayer.play();
+                this.isPlaying = true;
+
+                this.updatePlayerDisplay();
+                this.renderTracks();
+                document.getElementById('player').classList.add('active');
+            }
+
+            pauseTrack() {
+                this.audioPlayer.pause();
+                this.isPlaying = false;
+                this.updatePlayerDisplay();
+                this.renderTracks();
+            }
+
+            togglePlay() {
+                if (this.currentTrackIndex === -1) return;
+
+                if (this.isPlaying) {
+                    this.pauseTrack();
+                } else {
+                    this.audioPlayer.play();
+                    this.isPlaying = true;
+                    this.updatePlayerDisplay();
+                    this.renderTracks();
+                }
+            }
+
+            nextTrack() {
+                if (this.tracks.length === 0) return;
+                
+                const nextIndex = (this.currentTrackIndex + 1) % this.tracks.length;
+                this.playTrack(nextIndex);
+            }
+
+            prevTrack() {
+                if (this.tracks.length === 0) return;
+                
+                const prevIndex = this.currentTrackIndex - 1 < 0 
+                    ? this.tracks.length - 1 
+                    : this.currentTrackIndex - 1;
+                this.playTrack(prevIndex);
+            }
+
+            updatePlayerDisplay() {
+                const playPauseBtn = document.getElementById('playPauseBtn');
+                const currentTrackName = document.getElementById('currentTrackName');
+
+                if (this.currentTrackIndex >= 0) {
+                    currentTrackName.textContent = this.tracks[this.currentTrackIndex].name;
+                    playPauseBtn.textContent = this.isPlaying ? '⏸️' : '▶️';
+                } else {
+                    currentTrackName.textContent = 'Не выбран трек';
+                    playPauseBtn.textContent = '▶️';
+                }
+            }
+
+            updateProgress() {
+                const currentTime = this.audioPlayer.currentTime;
+                const duration = this.audioPlayer.duration;
+
+                if (duration) {
+                    const progress = (currentTime / duration) * 100;
+                    document.getElementById('progressFill').style.width = progress + '%';
+                }
+
+                document.getElementById('currentTime').textContent = this.formatTime(currentTime);
+            }
+
+            updateDuration() {
+                const duration = this.audioPlayer.duration;
+                document.getElementById('totalTime').textContent = this.formatTime(duration);
+            }
+
+            seekTo(event) {
+                const progressBar = event.currentTarget;
+                const rect = progressBar.getBoundingClientRect();
+                const percent = (event.clientX - rect.left) / rect.width;
+                const duration = this.audioPlayer.duration;
+
+                if (duration) {
+                    this.audioPlayer.currentTime = duration * percent;
+                }
+            }
+
+            formatTime(seconds) {
+                if (!seconds || isNaN(seconds)) return '0:00';
+                
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // Инициализация приложения
+        const deviMusic = new DeviMusic();
+    </script>
+</body>
+</html>
